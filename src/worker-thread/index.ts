@@ -57,6 +57,8 @@ import { Comment } from './dom/Comment';
 import { DOMTokenList } from './dom/DOMTokenList';
 import { DocumentFragment } from './dom/DocumentFragment';
 import { Element } from './dom/Element';
+import { TransferrableKeys } from '../transfer/TransferrableKeys';
+import { HydrateableNode } from '../transfer/TransferrableNodes';
 
 const globalScope: GlobalScope = {
   innerWidth: 0,
@@ -128,3 +130,24 @@ export const workerDOM = (function(postMessage, addEventListener, removeEventLis
 })(postMessage.bind(self) || noop, addEventListener.bind(self) || noop, removeEventListener.bind(self) || noop);
 
 export const hydrate = initialize;
+
+(<any>self)['window'] = self;
+
+const onMessage = function(e: MessageEvent) {
+  if (e.data.type === 'hydrate') {
+    self.removeEventListener('message', onMessage);
+    var { args, observeKey, script } = <InitializeData>e.data;
+    hydrate(workerDOM.document, ...args);
+    workerDOM.document[observeKey](self);
+    Object.keys(workerDOM).forEach(key => ((<any>self)[key] = (<any>workerDOM)[key]));
+    importScripts(script);
+  }
+};
+
+self.addEventListener('message', onMessage);
+
+interface InitializeData {
+  script: string;
+  observeKey: TransferrableKeys;
+  args: [Array<string>, HydrateableNode, Array<string>, [number, number], { [key: string]: string }, { [key: string]: string }];
+}

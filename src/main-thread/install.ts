@@ -20,7 +20,7 @@ import { NodeContext } from './nodes';
 import { StringContext } from './strings';
 import { TransferrableKeys } from '../transfer/TransferrableKeys';
 import { InboundWorkerDOMConfiguration, normalizeConfiguration } from './configuration';
-import { WorkerContext } from './worker';
+import { WorkerContext, WorkerContextWithHttpResource } from './worker';
 import { ObjectContext } from './object-context';
 
 const ALLOWABLE_MESSAGE_TYPES = [MessageType.MUTATE, MessageType.HYDRATE];
@@ -83,4 +83,48 @@ export function install(
     }
     return null;
   });
+}
+
+/**
+ * @param baseElement
+ * @param config
+ */
+export async function initWorker(baseElement: HTMLElement, config: InboundWorkerDOMConfiguration): Promise<Worker | null> {
+  const stringContext = new StringContext();
+  const objectContext = new ObjectContext();
+  const nodeContext = new NodeContext(stringContext, baseElement);
+  const normalizedConfig = normalizeConfiguration(config);
+  const { domURL, authorURL } = config;
+
+  if (domURL && authorURL) {
+    const workerContext = new WorkerContextWithHttpResource(baseElement, nodeContext, normalizedConfig);
+    const mutatorContext = new MutatorProcessor(
+      stringContext,
+      nodeContext,
+      (workerContext as unknown) as WorkerContext,
+      normalizedConfig,
+      objectContext,
+    );
+    workerContext.worker.onmessage = (message: MessageFromWorker) => {
+      const { data } = message;
+
+      if (!ALLOWABLE_MESSAGE_TYPES.includes(data[TransferrableKeys.type])) {
+        return;
+      }
+
+      mutatorContext.mutate(
+        (data as MutationFromWorker)[TransferrableKeys.phase],
+        (data as MutationFromWorker)[TransferrableKeys.nodes],
+        (data as MutationFromWorker)[TransferrableKeys.strings],
+        new Uint16Array(data[TransferrableKeys.mutations]),
+      );
+
+      if (config.onReceiveMessage) {
+        config.onReceiveMessage(message);
+      }
+    };
+
+    return workerContext.worker;
+  }
+  return null;
 }

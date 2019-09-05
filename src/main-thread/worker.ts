@@ -98,3 +98,91 @@ export class WorkerContext {
     this.worker.postMessage(message, transferables || []);
   }
 }
+
+export class WorkerContextWithHttpResource {
+  private [TransferrableKeys.worker]: Worker;
+  private nodeContext: NodeContext;
+  private config: WorkerDOMConfiguration;
+
+  /**
+   * @param baseElement
+   * @param nodeContext
+   * @param authorScript
+   * @param config
+   */
+  constructor(baseElement: HTMLElement, nodeContext: NodeContext, config: WorkerDOMConfiguration) {
+    const { authorURL, domURL } = config;
+
+    this.nodeContext = nodeContext;
+    this.config = config;
+
+    const { skeleton, strings } = createHydrateableRootNode(baseElement, config);
+
+    const cssKeys: Array<string> = [];
+    for (const key in baseElement.style) {
+      cssKeys.push(key);
+    }
+
+    // TODO(choumx): Sync read of all localStorage and sessionStorage a possible performance bottleneck?
+    const localStorageData = config.sanitizer ? config.sanitizer.getStorage(StorageLocation.Local) : window.localStorage;
+    const sessionStorageData = config.sanitizer ? config.sanitizer.getStorage(StorageLocation.Session) : window.sessionStorage;
+
+    // const code = `
+    //   'use strict';
+    //   (function(){
+    //     ${workerDOMScript}
+    //     self['window'] = self;
+    //     var workerDOM = WorkerThread.workerDOM;
+    //     WorkerThread.hydrate(
+    //       workerDOM.document,
+    //       ${JSON.stringify(strings)},
+    //       ${JSON.stringify(skeleton)},
+    //       ${JSON.stringify(cssKeys)},
+    //       [${window.innerWidth}, ${window.innerHeight}],
+    //       ${JSON.stringify(localStorageData)},
+    //       ${JSON.stringify(sessionStorageData)}
+    //     );
+    //     workerDOM.document[${TransferrableKeys.observe}](this);
+    //     Object.keys(workerDOM).forEach(key => self[key] = workerDOM[key]);
+    //   }).call(self);
+    //   ${authorScript}
+    //   //# sourceURL=${encodeURI(config.authorURL)}`;
+    const worker = new Worker(authorURL);
+    this[TransferrableKeys.worker] = worker;
+
+    worker.postMessage({
+      type: 'hydrate',
+      script: domURL,
+      observeKey: TransferrableKeys.observe,
+      args: [strings, skeleton, cssKeys, [window.innerWidth, window.innerHeight], { ...localStorageData }, { ...sessionStorageData }],
+    });
+
+    // domURL
+    if (WORKER_DOM_DEBUG) {
+      console.info('debug', 'hydratedNode', readableHydrateableRootNode(baseElement, config));
+    }
+    if (config.onCreateWorker) {
+      config.onCreateWorker(baseElement, strings, skeleton, cssKeys);
+    }
+  }
+
+  /**
+   * Returns the private worker.
+   */
+  get worker(): Worker {
+    return this[TransferrableKeys.worker];
+  }
+
+  /**
+   * @param message
+   */
+  messageToWorker(message: MessageToWorker, transferables?: Transferable[]) {
+    if (WORKER_DOM_DEBUG) {
+      console.info('debug', 'messageToWorker', readableMessageToWorker(this.nodeContext, message));
+    }
+    if (this.config.onSendMessage) {
+      this.config.onSendMessage(message);
+    }
+    this.worker.postMessage(message, transferables || []);
+  }
+}

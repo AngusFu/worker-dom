@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-import { fetchAndInstall } from './install';
+import { initWorker, fetchAndInstall } from './install';
+
+export function upgradeElementWithHttpResources(baseElement: Element, authorURL: string, domURL: string): Promise<Worker | null> {
+  return initWorker(baseElement as HTMLElement, {
+    authorURL,
+    domURL,
+  });
+}
 
 export function upgradeElement(baseElement: Element, domURL: string): Promise<Worker | null> {
   const authorURL = baseElement.getAttribute('src');
