@@ -85,7 +85,7 @@
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged",
-      "pre-push": "npm-run-all clean test clean size"
+      "pre-push": "npm-run-all clean test clean"
     }
   },
   "bundlesize": [
