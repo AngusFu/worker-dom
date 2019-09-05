@@ -28,6 +28,8 @@ export const enum TransferrableMutationType {
   OBJECT_CREATION = 10,
   IMAGE_BITMAP_INSTANCE = 11,
   STORAGE = 12,
+
+  DOM_MANIPULATION = 13,
 }
 
 export const DefaultAllowedMutations = [
@@ -36,6 +38,7 @@ export const DefaultAllowedMutations = [
   TransferrableMutationType.CHILD_LIST,
   TransferrableMutationType.PROPERTIES,
   TransferrableMutationType.EVENT_SUBSCRIPTION,
+  TransferrableMutationType.DOM_MANIPULATION,
   TransferrableMutationType.GET_BOUNDING_CLIENT_RECT,
   TransferrableMutationType.LONG_TASK_START,
   TransferrableMutationType.LONG_TASK_END,
@@ -60,6 +63,7 @@ export const ReadableMutationType: { [key: number]: string } = {
   10: 'OBJECT_CREATION',
   11: 'IMAGE_BITMAP_INSTANCE',
   12: 'STORAGE',
+  13: 'DOM_MANIPULATION',
 };
 
 /**

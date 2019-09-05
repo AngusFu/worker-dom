@@ -22,7 +22,14 @@
  * @see https://github.com/Microsoft/TypeScript/blob/master/doc/spec.md#9.4
  */
 
-import { EventToWorker, MessageType, MessageToWorker, ValueSyncToWorker, BoundingClientRectToWorker } from '../transfer/Messages';
+import {
+  EventToWorker,
+  MessageType,
+  MessageToWorker,
+  ValueSyncToWorker,
+  BoundingClientRectToWorker,
+  DOMManipulationToWorker,
+} from '../transfer/Messages';
 import { HydrateableNode, TransferredNode, TransferrableNodeIndex } from '../transfer/TransferrableNodes';
 import { NodeContext } from './nodes';
 import { TransferrableEvent } from '../transfer/TransferrableEvent';
@@ -77,6 +84,8 @@ const isEvent = (message: MessageToWorker): message is EventToWorker => message[
 const isValueSync = (message: MessageToWorker): message is ValueSyncToWorker => message[TransferrableKeys.type] == MessageType.SYNC;
 const isBoundingClientRect = (message: MessageToWorker): message is BoundingClientRectToWorker =>
   message[TransferrableKeys.type] === MessageType.GET_BOUNDING_CLIENT_RECT;
+const isDOMManipulation = (message: MessageToWorker): message is DOMManipulationToWorker =>
+  message[TransferrableKeys.type] === MessageType.DOM_MANIPULATION;
 
 /**
  * @param nodeContext {NodeContext}
@@ -138,6 +147,11 @@ export function readableMessageToWorker(nodeContext: NodeContext, message: Messa
   } else if (isBoundingClientRect(message)) {
     return {
       type: 'GET_BOUNDING_CLIENT_RECT',
+      target: readableTransferredNode(nodeContext, message[TransferrableKeys.target]),
+    };
+  } else if (isDOMManipulation(message)) {
+    return {
+      type: 'DOM_MANIPULATION',
       target: readableTransferredNode(nodeContext, message[TransferrableKeys.target]),
     };
   } else {

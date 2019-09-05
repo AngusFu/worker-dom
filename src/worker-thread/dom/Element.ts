@@ -31,7 +31,7 @@ import { TransferrableKeys } from '../../transfer/TransferrableKeys';
 import { NodeType, HTML_NAMESPACE } from '../../transfer/TransferrableNodes';
 import { TransferrableBoundingClientRect } from '../../transfer/TransferrableBoundClientRect';
 import { TransferrableMutationType } from '../../transfer/TransferrableMutation';
-import { MessageToWorker, MessageType, BoundingClientRectToWorker } from '../../transfer/Messages';
+import { MessageToWorker, MessageType, BoundingClientRectToWorker, DOMManipulationToWorker } from '../../transfer/Messages';
 import { parse } from '../../third_party/html-parser/html-parser';
 import { propagate } from './Node';
 
@@ -80,6 +80,34 @@ enum ElementKind {
  * @see https://html.spec.whatwg.org/multipage/syntax.html#void-elements
  */
 const VOID_ELEMENTS: string[] = ['AREA', 'BASE', 'BR', 'COL', 'EMBED', 'HR', 'IMG', 'INPUT', 'LINK', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR'];
+
+const VALID_MEASUREMENT_KEYS = <const>[
+  'clientHeight',
+  'clientLeft',
+  'clientTop',
+  'clientWidth',
+  'scrollHeight',
+  'scrollLeft',
+  'scrollLeftMax',
+  'scrollTop',
+  'scrollWidth',
+];
+
+const VALID_DOM_METHODS = <const>[
+  // 'focus',
+  // 'blur'
+  // TODO
+  // scroll
+  // scrollTo
+  // scrollBy
+];
+
+const VALID_DOM_MANIPULATIONS = [...VALID_MEASUREMENT_KEYS, ...VALID_DOM_METHODS];
+type ValidDOMManipulationKey = typeof VALID_MEASUREMENT_KEYS[number] | typeof VALID_DOM_METHODS[number];
+
+function isValidDOMManipulation(name: any): name is ValidDOMManipulationKey {
+  return VALID_DOM_MANIPULATIONS.includes(name);
+}
 
 export class Element extends ParentNode {
   private _classList: DOMTokenList;
@@ -540,6 +568,35 @@ export class Element extends ParentNode {
         this.ownerDocument.addGlobalEventListener('message', messageHandler);
         transfer(this.ownerDocument as Document, [TransferrableMutationType.GET_BOUNDING_CLIENT_RECT, this[TransferrableKeys.index]]);
         setTimeout(resolve, 500, defaultValue); // TODO: Why a magical constant, define and explain.
+      }
+    });
+  }
+
+  public manipulateAsync(key: ValidDOMManipulationKey): Promise<any> {
+    if (isValidDOMManipulation(key) === false) {
+      return Promise.reject(`Invalid measurement: ${key}`);
+    }
+
+    return new Promise(resolve => {
+      const messageHandler = ({ data }: { data: MessageToWorker }) => {
+        if (
+          data[TransferrableKeys.type] === MessageType.DOM_MANIPULATION &&
+          (data as DOMManipulationToWorker)[TransferrableKeys.target][0] === this[TransferrableKeys.index]
+        ) {
+          this.ownerDocument.removeGlobalEventListener('message', messageHandler);
+          const transferred: any = (data as DOMManipulationToWorker)[TransferrableKeys.data];
+          resolve(transferred);
+        }
+      };
+
+      if (!this.ownerDocument.addGlobalEventListener || !this.isConnected) {
+        // Elements run within Node runtimes are missing addEventListener as a global.
+        // In this case, treat the return value the same as a disconnected node.
+        resolve();
+      } else {
+        this.ownerDocument.addGlobalEventListener('message', messageHandler);
+        transfer(this.ownerDocument as Document, [TransferrableMutationType.DOM_MANIPULATION, this[TransferrableKeys.index], storeString(key)]);
+        setTimeout(resolve, 500); // TODO: Why a magical constant, define and explain.
       }
     });
   }

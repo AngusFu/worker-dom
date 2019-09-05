@@ -36,6 +36,8 @@ export const enum MessageType {
   // NAVIGATION_PUSH_STATE = 8,
   // NAVIGATION_REPLACE_STATE = 9,
   // NAVIGATION_POP_STATE = 10,
+
+  DOM_MANIPULATION = 13,
 }
 
 export interface MutationFromWorker {
@@ -67,6 +69,11 @@ export interface BoundingClientRectToWorker {
   [TransferrableKeys.target]: TransferredNode;
   [TransferrableKeys.data]: TransferrableBoundingClientRect;
 }
+export interface DOMManipulationToWorker {
+  [TransferrableKeys.type]: MessageType.DOM_MANIPULATION;
+  [TransferrableKeys.target]: TransferredNode;
+  [TransferrableKeys.data]: any;
+}
 export interface OffscreenCanvasToWorker {
   [TransferrableKeys.type]: MessageType.OFFSCREEN_CANVAS_INSTANCE;
   [TransferrableKeys.target]: TransferredNode;
@@ -85,6 +92,7 @@ export type MessageToWorker =
   | EventToWorker
   | ValueSyncToWorker
   | BoundingClientRectToWorker
+  | DOMManipulationToWorker
   | ResizeSyncToWorker
   | OffscreenCanvasToWorker
   | ImageBitmapToWorker;
