@@ -106,6 +106,7 @@ export const EventSubscriptionProcessor: CommandExecutorInterface = (strings, no
     workerContext.messageToWorker({
       [TransferrableKeys.type]: MessageType.EVENT,
       [TransferrableKeys.event]: {
+        [TransferrableKeys.detail]: 'detail' in event ? event!.detail : undefined,
         [TransferrableKeys.index]: index,
         [TransferrableKeys.bubbles]: event.bubbles,
         [TransferrableKeys.cancelable]: event.cancelable,

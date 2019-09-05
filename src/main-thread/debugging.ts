@@ -91,6 +91,7 @@ function readableTransferrableEvent(nodeContext: NodeContext, event: Transferrab
   };
 
   return {
+    detail: event[TransferrableKeys.detail],
     type: event[TransferrableKeys.type],
     bubbles: value(event[TransferrableKeys.bubbles]),
     cancelable: value(event[TransferrableKeys.cancelable]),

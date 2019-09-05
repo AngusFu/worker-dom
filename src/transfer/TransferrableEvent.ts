@@ -35,6 +35,8 @@ export interface TransferrableTouchList {
 }
 
 export interface TransferrableEvent {
+  readonly [TransferrableKeys.detail]: any;
+
   readonly [TransferrableKeys.index]: number;
   readonly [TransferrableKeys.bubbles]?: boolean;
   readonly [TransferrableKeys.cancelable]?: boolean;

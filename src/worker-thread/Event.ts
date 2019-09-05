@@ -171,6 +171,7 @@ export function propagate(global: WorkerDOMGlobalScope): void {
         Object.assign(
           new Event(event[TransferrableKeys.type], { bubbles: event[TransferrableKeys.bubbles], cancelable: event[TransferrableKeys.cancelable] }),
           {
+            detail: event[TransferrableKeys.detail],
             cancelBubble: event[TransferrableKeys.cancelBubble],
             defaultPrevented: event[TransferrableKeys.defaultPrevented],
             eventPhase: event[TransferrableKeys.eventPhase],

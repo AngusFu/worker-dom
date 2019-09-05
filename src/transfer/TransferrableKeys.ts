@@ -91,4 +91,5 @@ export const enum TransferrableKeys {
   callIndex = 73,
   // This must always be the last numerically ordered Key, for testing purposes.
   END = 74,
+  detail = 99999,
 }
