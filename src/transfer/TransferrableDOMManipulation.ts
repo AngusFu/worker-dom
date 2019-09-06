@@ -17,5 +17,8 @@
 export const enum DOMManipulationMutationIndex {
   Target = 1,
   Key = 2,
-  End = 3,
+  // TODO 支持传参
+  /** 0: 属性; 1: 方法 */
+  Type = 3,
+  End = 4,
 }

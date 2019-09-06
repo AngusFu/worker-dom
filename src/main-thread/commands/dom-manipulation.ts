@@ -32,10 +32,27 @@ export const DOMManipulationProcessor: CommandExecutorInterface = (strings, node
         const key = strings.get(keyIndex);
 
         if (target) {
+          // type === 0 属性操作
+          // type === 1 函数操作
+          const type = mutations[startPosition + DOMManipulationMutationIndex.Type];
+          let result: any;
+
+          if (type === 0) {
+            result = target[key]
+          } else if (type === 1) {
+            if (key === 'getComputedStyle') {
+              result = { ...window.getComputedStyle(<Element>target) }
+            } else {
+              result = target[key]();
+            }
+          } else {
+            throw new Error(`Invalid manipulation: ${key}`)
+          }
+
           workerContext.messageToWorker({
             [TransferrableKeys.type]: MessageType.DOM_MANIPULATION,
             [TransferrableKeys.target]: [target._index_],
-            [TransferrableKeys.data]: target[key],
+            [TransferrableKeys.data]: result
           });
         } else {
           console.error(`DOM_MANIPULATION: getNode(${targetIndex}) is null.`);

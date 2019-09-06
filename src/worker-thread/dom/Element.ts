@@ -34,6 +34,7 @@ import { TransferrableMutationType } from '../../transfer/TransferrableMutation'
 import { MessageToWorker, MessageType, BoundingClientRectToWorker, DOMManipulationToWorker } from '../../transfer/Messages';
 import { parse } from '../../third_party/html-parser/html-parser';
 import { propagate } from './Node';
+import { ValidDOMManipulationKey, isValidDOMProperty, isValidDOMMethod } from '../dom-manipulation';
 
 export const NS_NAME_TO_CLASS: { [key: string]: typeof Element } = {};
 export const registerSubclass = (localName: string, subclass: typeof Element, namespace: string = HTML_NAMESPACE): any =>
@@ -80,34 +81,6 @@ enum ElementKind {
  * @see https://html.spec.whatwg.org/multipage/syntax.html#void-elements
  */
 const VOID_ELEMENTS: string[] = ['AREA', 'BASE', 'BR', 'COL', 'EMBED', 'HR', 'IMG', 'INPUT', 'LINK', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR'];
-
-const VALID_MEASUREMENT_KEYS = <const>[
-  'clientHeight',
-  'clientLeft',
-  'clientTop',
-  'clientWidth',
-  'scrollHeight',
-  'scrollLeft',
-  'scrollLeftMax',
-  'scrollTop',
-  'scrollWidth',
-];
-
-const VALID_DOM_METHODS = <const>[
-  // 'focus',
-  // 'blur'
-  // TODO
-  // scroll
-  // scrollTo
-  // scrollBy
-];
-
-const VALID_DOM_MANIPULATIONS = [...VALID_MEASUREMENT_KEYS, ...VALID_DOM_METHODS];
-type ValidDOMManipulationKey = typeof VALID_MEASUREMENT_KEYS[number] | typeof VALID_DOM_METHODS[number];
-
-function isValidDOMManipulation(name: any): name is ValidDOMManipulationKey {
-  return VALID_DOM_MANIPULATIONS.includes(name);
-}
 
 export class Element extends ParentNode {
   private _classList: DOMTokenList;
@@ -573,7 +546,13 @@ export class Element extends ParentNode {
   }
 
   public manipulateAsync(key: ValidDOMManipulationKey): Promise<any> {
-    if (isValidDOMManipulation(key) === false) {
+    let type: number;
+
+    if (isValidDOMProperty(key)) {
+      type = 0
+    } else if (isValidDOMMethod(key)) {
+      type = 1
+    } else {
       return Promise.reject(`Invalid measurement: ${key}`);
     }
 
@@ -595,7 +574,7 @@ export class Element extends ParentNode {
         resolve();
       } else {
         this.ownerDocument.addGlobalEventListener('message', messageHandler);
-        transfer(this.ownerDocument as Document, [TransferrableMutationType.DOM_MANIPULATION, this[TransferrableKeys.index], storeString(key)]);
+        transfer(this.ownerDocument as Document, [TransferrableMutationType.DOM_MANIPULATION, this[TransferrableKeys.index], storeString(key), type]);
         setTimeout(resolve, 500); // TODO: Why a magical constant, define and explain.
       }
     });

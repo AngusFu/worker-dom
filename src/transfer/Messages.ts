@@ -72,6 +72,7 @@ export interface BoundingClientRectToWorker {
 export interface DOMManipulationToWorker {
   [TransferrableKeys.type]: MessageType.DOM_MANIPULATION;
   [TransferrableKeys.target]: TransferredNode;
+  // TODO(wemlion): add explicit type
   [TransferrableKeys.data]: any;
 }
 export interface OffscreenCanvasToWorker {
