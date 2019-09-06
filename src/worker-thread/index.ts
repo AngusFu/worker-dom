@@ -59,6 +59,7 @@ import { DocumentFragment } from './dom/DocumentFragment';
 import { Element } from './dom/Element';
 import { TransferrableKeys } from '../transfer/TransferrableKeys';
 import { HydrateableNode } from '../transfer/TransferrableNodes';
+import { rewriteAPI } from './rewrite-api';
 
 const globalScope: GlobalScope = {
   innerWidth: 0,
@@ -135,11 +136,14 @@ export const hydrate = initialize;
 
 const onMessage = function(e: MessageEvent) {
   if (e.data.type === 'hydrate') {
+    const { args, observeKey, script } = <InitializeData>e.data;
+
     self.removeEventListener('message', onMessage);
-    var { args, observeKey, script } = <InitializeData>e.data;
     hydrate(workerDOM.document, ...args);
     workerDOM.document[observeKey](self);
     Object.keys(workerDOM).forEach(key => ((<any>self)[key] = (<any>workerDOM)[key]));
+    rewriteAPI(workerDOM.document);
+
     importScripts(script);
   }
 };
