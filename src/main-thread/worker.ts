@@ -147,12 +147,12 @@ export class WorkerContextWithHttpResource {
     //   }).call(self);
     //   ${authorScript}
     //   //# sourceURL=${encodeURI(config.authorURL)}`;
-    const worker = new Worker(authorURL);
+    const worker = new Worker(domURL);
     this[TransferrableKeys.worker] = worker;
 
     worker.postMessage({
       type: 'hydrate',
-      script: domURL,
+      script: authorURL,
       runtime: runtimeURL,
       observeKey: TransferrableKeys.observe,
       args: [strings, skeleton, cssKeys, [window.innerWidth, window.innerHeight], { ...localStorageData }, { ...sessionStorageData }],
