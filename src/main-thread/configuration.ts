@@ -34,6 +34,7 @@ export interface InboundWorkerDOMConfiguration {
   // ---- Required Values.
   authorURL: string;
   domURL: string;
+  runtimeURL?: string;
 
   // ---- Optional Overrides
   // Schedules mutation phase.
@@ -60,6 +61,7 @@ export interface WorkerDOMConfiguration {
   // ---- Required Values.
   authorURL: string;
   domURL: string;
+  runtimeURL?: string;
 
   // ---- Optional, with defaults
   // Schedules mutation phase.

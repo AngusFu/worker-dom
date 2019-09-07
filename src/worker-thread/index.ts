@@ -136,14 +136,14 @@ export const hydrate = initialize;
 
 const onMessage = function(e: MessageEvent) {
   if (e.data.type === 'hydrate') {
-    const { args, observeKey, script } = <InitializeData>e.data;
+    const { args, observeKey, runtime, script } = <InitializeData>e.data;
 
     self.removeEventListener('message', onMessage);
     hydrate(workerDOM.document, ...args);
     workerDOM.document[observeKey](self);
     Object.keys(workerDOM).forEach(key => ((<any>self)[key] = (<any>workerDOM)[key]));
+    runtime && importScripts(runtime);
     rewriteAPI(workerDOM.document);
-
     importScripts(script);
   }
 };
@@ -151,7 +151,10 @@ const onMessage = function(e: MessageEvent) {
 self.addEventListener('message', onMessage);
 
 interface InitializeData {
+  /** user script */
   script: string;
+  /** runtime script */
+  runtime: string;
   observeKey: TransferrableKeys;
   args: [Array<string>, HydrateableNode, Array<string>, [number, number], { [key: string]: string }, { [key: string]: string }];
 }

@@ -111,7 +111,7 @@ export class WorkerContextWithHttpResource {
    * @param config
    */
   constructor(baseElement: HTMLElement, nodeContext: NodeContext, config: WorkerDOMConfiguration) {
-    const { authorURL, domURL } = config;
+    const { authorURL, domURL, runtimeURL } = config;
 
     this.nodeContext = nodeContext;
     this.config = config;
@@ -153,6 +153,7 @@ export class WorkerContextWithHttpResource {
     worker.postMessage({
       type: 'hydrate',
       script: domURL,
+      runtime: runtimeURL,
       observeKey: TransferrableKeys.observe,
       args: [strings, skeleton, cssKeys, [window.innerWidth, window.innerHeight], { ...localStorageData }, { ...sessionStorageData }],
     });

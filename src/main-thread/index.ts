@@ -16,10 +16,11 @@
 
 import { initWorker, fetchAndInstall } from './install';
 
-export function upgradeElementWithHttpResources(baseElement: Element, authorURL: string, domURL: string): Promise<Worker | null> {
+export function upgradeElementWithHttpResources(baseElement: Element, authorURL: string, domURL: string, runtimeURL: string): Promise<Worker | null> {
   return initWorker(baseElement as HTMLElement, {
     authorURL,
     domURL,
+    runtimeURL
   });
 }
 
