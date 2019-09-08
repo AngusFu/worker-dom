@@ -4,28 +4,42 @@ import { HTMLElement } from "./dom/HTMLElement";
 
 export function rewriteAPI (document: Document) {
   {
-    document.head = document.querySelector('app-head');
-    document.body = document.querySelector('app-body') as Element;
-    document.mountingNode = document.body.querySelector('div');
+    const descriptor = {
+      enumerable: false,
+      configurable: false,
+      writable: false,
+    }
 
-    document.body.appendChild = function() {
-      throw new TypeError(
-        'Illegal invocation: document.body.appendChild is not allowed.'
-      );
-    };
-  }
-
-  {
     const createElement = document.createElement;
-    document.createElement = function(tagName) {
-      if (tagName === 'script') {
-        const msg = '<script> element is not allowed.';
-        const error = new TypeError(msg);
-        console.error(error);
-        return createElement.call(this, 'span');
+    const head = document.querySelector('app-head')
+    const body = document.querySelector('app-body')
+
+    Object.defineProperties(document, {
+      head: { ...descriptor, value: head },
+      body: { ...descriptor, value: body },
+      createElement: {
+        ...descriptor,
+        value (tagName: string) {
+          tagName = tagName.toLowerCase()
+          if (tagName === 'script' || tagName === 'embed') {
+            const msg = '<script> element is not allowed.';
+            const error = new TypeError(msg);
+            console.error(error);
+            return createElement.call(this, 'span');
+          }
+          return createElement.call(this, tagName);
+        }
       }
-      return createElement.call(this, tagName);
-    };
+    })
+
+    Object.defineProperty(document.body, 'appendChild', {
+      ...descriptor,
+      value() {
+        throw new TypeError(
+          'Illegal invocation: document.body.appendChild is not allowed.'
+        );
+      }
+    })
   }
 
   /**
